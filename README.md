@@ -19,7 +19,7 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 - **Colour-coded tree icon** — green → orange → red as usage climbs
 - **Two-bar dashboard** — separate horizontal bars for Current session and Weekly limits, each with reset timing
 - **Session-aware** — captures Claude's internal rate-limit window via a fetch interceptor, not just the billing-period total
-- **Reset countdowns** — "Resets in X hr Y min" for the session window; "Resets Fri 10:00 AM" for weekly limits
+- **Reset countdowns** — "Resets in X hr Y min" for the session window; "Resets [Day] [Time]" for weekly limits — sourced directly from claude.ai
 - **Configurable auto-refresh** — 30s / 1m / 2m / 5m / 10m, set via right-click menu
 - **Native notifications** — alerts at 80%, 90%, 100% usage and on session reset
 - **Stale data indicator** — icon turns grey and shows ⚠ if data is older than 10 minutes
@@ -89,7 +89,7 @@ The two percentages are: **Current session %** | **Weekly limits %**
 
 - **Plan usage limits** section with two progress bars:
   - **Current session** — rate-limit window usage with "Resets in X hr Y min" countdown
-  - **Weekly limits / All models** — billing-period usage with "Resets Fri HH:MM AM" date
+  - **Weekly limits / All models** — billing-period usage with reset day and time (e.g. "Resets Fri 10:00 AM"), read directly from claude.ai
 - **Refresh button** (↻) — force an immediate scrape
 - **Quit button** — exit the app
 
