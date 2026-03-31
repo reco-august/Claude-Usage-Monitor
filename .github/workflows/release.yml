@@ -51,6 +51,7 @@ jobs:
 
       # ── Package ──────────────────────────────────────────────────────────────
       - name: Package app into DMG
+        id: package
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
           APP_PATH=$(find "${{ runner.temp }}/DerivedData" -name "ClaudeUsageMonitor.app" -type d | head -1)
@@ -74,20 +75,20 @@ jobs:
             -ov -format UDZO \
             "dist/$DMG_NAME"
 
-          echo "DMG_PATH=dist/$DMG_NAME" >> "$GITHUB_ENV"
-          echo "VERSION=$VERSION"        >> "$GITHUB_ENV"
+          echo "dmg_path=dist/$DMG_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"        >> "$GITHUB_OUTPUT"
 
       # ── Release ─────────────────────────────────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Claude Usage Monitor v${{ env.VERSION }}"
-          files: ${{ env.DMG_PATH }}
+          name: "Claude Usage Monitor v${{ steps.package.outputs.version }}"
+          files: ${{ steps.package.outputs.dmg_path }}
           generate_release_notes: true
           body: |
             ## Install
 
-            1. Download **ClaudeUsageMonitor-v${{ env.VERSION }}.dmg** below
+            1. Download **ClaudeUsageMonitor-v${{ steps.package.outputs.version }}.dmg** below
             2. Open the DMG and drag **ClaudeUsageMonitor** to **Applications**
             3. **First launch only:** right-click the app → **Open** (required because the app is not notarized)
 
