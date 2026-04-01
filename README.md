@@ -132,13 +132,6 @@ swift scripts/make_icon.swift
 # Produces /tmp/AppIcon.icns — copy to ClaudeUsageMonitor/Assets/AppIcon.icns
 ```
 
-### Open in Xcode (optional)
-
-```bash
-brew install xcodegen
-xcodegen generate          # creates ClaudeUsageMonitor.xcodeproj
-open ClaudeUsageMonitor.xcodeproj
-```
 
 ---
 
