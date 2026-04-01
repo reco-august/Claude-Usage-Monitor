@@ -261,17 +261,7 @@ class WebScrapingService: NSObject, ObservableObject {
     /// Called from the fetch/XHR interceptor via message handler.
     private func applyAPIResult(_ json: [String: Any]) {
 
-        // ── 1. Extract reset date from anywhere in the JSON (independently of usage counts)
-        if let rd = findResetDate(in: json) {
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                if self.usageData?.resetDate == nil {
-                    self.usageData?.resetDate = rd
-                }
-            }
-        }
-
-        // ── 2. Try to find session/window usage counts
+        // ── Try to find session/window usage counts
         let candidates: [(used: Any?, limit: Any?, reset: Any?)] = [
             (json["messages_used"],   json["messages_limit"],   json["reset_at"]),
             (json["usage_count"],     json["usage_limit"],      json["resets_at"]),
@@ -313,9 +303,13 @@ for c in (candidates + nestedCandidates) {
                 )
                 data.sessionUsed  = u
                 data.sessionLimit = l
-                // Only update resetDate if it's in the future — a past date means
-                // the window already reset and we'd show "Resets soon" incorrectly.
-                if let rd = resetDate, rd > Date() { data.resetDate = rd }
+                // Only accept resetDate as session reset if it's in the future
+                // AND within 6 hours — anything longer is a billing/subscription reset,
+                // not the rate-limit window (Claude's session window is max 5h).
+                if let rd = resetDate, rd > Date(),
+                   rd.timeIntervalSince(Date()) <= 6 * 3600 {
+                    data.resetDate = rd
+                }
                 data.lastUpdated  = Date()
                 self.usageData  = data
                 self.isLoading  = false

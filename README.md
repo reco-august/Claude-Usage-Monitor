@@ -8,9 +8,9 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 
 ## Demo
 
-<img src="screenshots/Claude Usage.gif" alt="ClaudeUsageMonitor demo" />
+<img src="screenshots/recording.gif" alt="ClaudeUsageMonitor demo" />
 
-<img src="screenshots/popover.png" width="260" alt="ClaudeUsageMonitor popover" />
+<img src="screenshots/Screenshot.png" width="260" alt="ClaudeUsageMonitor popover" />
 
 ---
 
@@ -18,7 +18,7 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 
 - **Menu-bar only** — no Dock icon, stays out of your way
 - **Burn rate display** — menu bar shows estimated time left (`~45min left | 42%`) based on actual usage pace; falls back to percentage when idle
-- **Colour-coded tree icon** — green → orange → red as usage climbs
+- **Colour-coded icon** — green → orange → red as usage climbs
 - **Two-bar dashboard** — separate horizontal bars for Current session and Weekly limits, each with reset timing
 - **Session-aware** — captures Claude's internal rate-limit window via a fetch interceptor, not just the billing-period total
 - **Reset countdowns** — "Resets in X hr Y min" for the session window; "Resets [Day] [Time]" for weekly limits — sourced directly from claude.ai
@@ -66,7 +66,7 @@ open /Applications/ClaudeUsageMonitor.app
 
 ### Step 4 — Log in to Claude
 
-A browser window opens automatically on first run. Log in to your Claude.ai account normally. The window closes by itself when login succeeds and the tree icon appears in your menu bar.
+A browser window opens automatically on first run. Log in to your Claude.ai account normally. The window closes by itself when login succeeds and the app icon appears in your menu bar.
 
 ### Homebrew (alternative)
 
@@ -81,10 +81,10 @@ brew install --cask claude-usage-monitor
 
 | Element | Meaning |
 |---------|---------|
-| 🌲 **Green** `12% \| 24%` | Plenty of messages left (< 50 % used) |
-| 🌲 **Orange** `~45min left \| 62%` | Burn rate active — estimated time left shown |
-| 🌲 **Red** `~8min left \| 91%` | Almost out — act fast |
-| 🌲 **Grey** `⚠ ~45min left \| 24%` | Data is stale (last update > 10 min ago) |
+| **Green** `12% \| 24%` | Plenty of messages left (< 50 % used) |
+| **Orange** `~45min left \| 62%` | Burn rate active — estimated time left shown |
+| **Red** `~8min left \| 91%` | Almost out — act fast |
+| **Grey** `⚠ ~45min left \| 24%` | Data is stale (last update > 10 min ago) |
 
 The left value shows **estimated time left** (burn rate) when active, or **Current session %** when idle. The right value is always **Weekly limits %**.
 

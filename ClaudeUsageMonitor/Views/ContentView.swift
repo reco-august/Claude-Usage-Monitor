@@ -40,12 +40,12 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(nsImage: {
-                let img = NSImage(named: NSImage.applicationIconName) ?? NSImage()
-                let copy = img.copy() as! NSImage
-                copy.size = NSSize(width: 20, height: 20)
-                return copy
-            }())
+            if let path = Bundle.main.path(forResource: "MenuBarIcon", ofType: "png"),
+               let img = NSImage(contentsOfFile: path) {
+                Image(nsImage: img)
+                    .resizable()
+                    .frame(width: 20, height: 20)
+            }
 
             Text("Claude Usage")
                 .font(.system(size: 14, weight: .semibold))

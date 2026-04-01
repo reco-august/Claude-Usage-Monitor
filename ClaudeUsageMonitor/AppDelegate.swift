@@ -68,10 +68,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let isStale = data?.isStale ?? false
 
-        if let img = NSImage(named: NSImage.applicationIconName) {
-            let copy = img.copy() as! NSImage
-            copy.size = NSSize(width: 18, height: 18)
-            button.image = copy
+        if let path = Bundle.main.path(forResource: "MenuBarIcon", ofType: "png"),
+           let img = NSImage(contentsOfFile: path) {
+            img.size = NSSize(width: 16, height: 16)
+            button.image = img
         }
 
         if let label = data?.menuBarLabel, !label.isEmpty {

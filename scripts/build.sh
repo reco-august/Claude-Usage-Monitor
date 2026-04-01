@@ -125,6 +125,12 @@ else
   echo "⚠  AppIcon.icns not found — app will use default icon"
 fi
 
+# Copy menu bar icon (small PNG, loaded directly to avoid macOS background compositing)
+if [ -f "$SOURCE_DIR/Assets/MenuBarIcon.png" ]; then
+  cp "$SOURCE_DIR/Assets/MenuBarIcon.png" "$APP_BUNDLE/Contents/Resources/"
+  echo "✔ Menu bar icon copied"
+fi
+
 # ── Ad-hoc code sign ─────────────────────────────────────────────────────────
 codesign --force --deep --sign - "$APP_BUNDLE"
 echo "✔ Signed (ad-hoc)"
