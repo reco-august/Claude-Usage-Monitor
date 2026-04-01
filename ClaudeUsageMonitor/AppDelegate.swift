@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let notifications = NotificationService.shared
     private let updater       = UpdateService.shared
 
+    private var usageHistory: [(date: Date, pct: Double)] = []
+
     // MARK: - Refresh interval (persisted in UserDefaults)
 
     private var refreshInterval: TimeInterval {
@@ -220,24 +222,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] data in
                 guard let self else { return }
-                if var data = data {
-                    // Burn rate: detect session reset (pct dropped) → clear history
-                    let lastPct = self.service.usageData?.usageHistory.last?.pct ?? 0
-                    if data.sessionPercentage < lastPct - 0.01 {
-                        data.usageHistory.removeAll()
-                    } else {
-                        data.usageHistory = self.service.usageData?.usageHistory ?? []
-                    }
-                    // Append current point
-                    data.usageHistory.append((date: Date(), pct: data.sessionPercentage))
-                    if data.usageHistory.count > 10 { data.usageHistory.removeFirst() }
-
-                    self.service.usageData = data
-                    self.updateIcon(data: data)
-                    self.notifications.checkAndNotify(data: data)
-                } else {
+                guard let data = data else {
                     self.updateIcon(data: nil)
+                    return
                 }
+                // Detect session reset (pct dropped) → clear history
+                if data.sessionPercentage < (self.usageHistory.last?.pct ?? 0) - 0.01 {
+                    self.usageHistory.removeAll()
+                }
+                // Append current point, keep last 10
+                self.usageHistory.append((date: Date(), pct: data.sessionPercentage))
+                if self.usageHistory.count > 10 { self.usageHistory.removeFirst() }
+
+                // Enrich a local copy — never write back to service.usageData
+                var enriched = data
+                enriched.usageHistory = self.usageHistory
+                self.updateIcon(data: enriched)
+                self.notifications.checkAndNotify(data: enriched)
             }
             .store(in: &cancellables)
 
