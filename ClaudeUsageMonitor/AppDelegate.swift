@@ -66,25 +66,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateIcon(data: UsageData?) {
         guard let button = statusItem.button else { return }
 
-        let pct     = data?.usagePercentage ?? 0
         let isStale = data?.isStale ?? false
 
-        let color: NSColor = {
-            if isStale { return .systemGray }
-            switch pct {
-            case 0.8...: return .systemRed
-            case 0.5...: return .systemYellow
-            default:     return .systemGreen
-            }
-        }()
-
-        let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
-            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
-
-        if let img = NSImage(systemSymbolName: "tree.fill",
-                             accessibilityDescription: "Claude Usage")?
-            .withSymbolConfiguration(symbolConfig) {
-            button.image = img
+        if let img = NSImage(named: NSImage.applicationIconName) {
+            let copy = img.copy() as! NSImage
+            copy.size = NSSize(width: 18, height: 18)
+            button.image = copy
         }
 
         if let label = data?.menuBarLabel, !label.isEmpty {

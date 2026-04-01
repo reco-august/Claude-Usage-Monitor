@@ -18,7 +18,7 @@ DIST_DIR="$PROJECT_DIR/dist"
 
 APP_NAME="ClaudeUsageMonitor"
 BUNDLE_ID="com.yourname.ClaudeUsageMonitor"
-VERSION="1.1.0"
+VERSION="1.5.0"
 UNIVERSAL=false
 
 # ── Parse args ────────────────────────────────────────────────────────────────

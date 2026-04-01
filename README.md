@@ -1,4 +1,4 @@
-# ClaudeUsageMonitor · v1.4.1
+# ClaudeUsageMonitor · v1.5.0
 
 A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usage in real time — no API key needed.
 
