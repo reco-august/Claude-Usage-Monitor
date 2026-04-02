@@ -170,7 +170,7 @@ struct UsageData {
                         copyText: "Please summarize our conversation so far in under 200 words so we can continue efficiently."
                     ),
                     TipAction(
-                        label: "Claude Code",
+                        label: "/compact",
                         copyText: "/compact"
                     )
                 ]
