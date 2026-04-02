@@ -151,9 +151,11 @@ private let kDOMExtractionJS = """
         }
 
         // Reset dates
-        // Weekly reset: "Resets Fri 10:00 AM" or "Resets on December 25"
-        var wr = body.match(/resets?\\s+((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s+\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
+        // Weekly reset — try multiple formats:
+        // "Resets Fri 10:00 AM" / "Resets Friday 10:00 AM" / "Resets Friday at 10:00 AM"
+        var wr = body.match(/resets?\\s+((?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\\s+(?:at\\s+)?\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
         if (wr) r.weeklyResetStr = wr[1].trim();
+        // "Resets on December 25" / "Resets Apr 5"
         var rd = body.match(/resets?\\s+(?:on\\s+)?([A-Z][a-z]+\\s+\\d{1,2}(?:,?\\s*\\d{4})?)/i);
         if (rd) r.resetDateStr = rd[1].trim();
         // Session reset: "Resets in 4 hr 29 min"
