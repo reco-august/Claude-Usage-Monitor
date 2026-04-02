@@ -71,14 +71,26 @@ private let kDOMExtractionJS = """
             r.needsLogin = true; return JSON.stringify(r);
         }
 
-        // Gather all visible text from every element (React may not populate body.innerText)
-        var body = document.body ? document.body.innerText : '';
-        if (!body || body.trim().length < 20) {
-            body = Array.from(document.querySelectorAll('*'))
-                .map(function(el) { return el.textContent || ''; })
-                .join(' ')
-                .replace(/\\s+/g, ' ').trim();
-        }
+        // Gather only visible text nodes — skip script/style/noscript entirely
+        var body = '';
+        try {
+            var walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                { acceptNode: function(node) {
+                    var p = node.parentElement;
+                    while (p) {
+                        var t = p.tagName;
+                        if (t === 'SCRIPT' || t === 'STYLE' || t === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
+                        p = p.parentElement;
+                    }
+                    return node.textContent.trim().length > 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                }}
+            );
+            var parts = [];
+            while (walker.nextNode()) { parts.push(walker.currentNode.textContent.trim()); }
+            body = parts.join(' ').replace(/\\s+/g, ' ').trim();
+        } catch(e) { body = document.body ? document.body.innerText : ''; }
         // Also check Next.js / React global state for reset info
         var nextData = '';
         try {
@@ -151,18 +163,22 @@ private let kDOMExtractionJS = """
         }
 
         // Reset dates
-        // Weekly reset — try multiple formats:
-        // "Resets Fri 10:00 AM" / "Resets Friday 10:00 AM" / "Resets Friday at 10:00 AM"
-        var wr = body.match(/resets?\\s+((?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\\s+(?:at\\s+)?\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
-        if (wr) r.weeklyResetStr = wr[1].trim();
-        // "Resets on December 25" / "Resets Apr 5"
+        // Collect ALL "Resets in X" occurrences — first = session, second = weekly
+        var allResets = Array.from(body.matchAll(/resets?\\s+in\\s+(\\d[^\\n]{2,30}?)(?=\\s*\\d{2,3}%|\\s*Last|$)/gi));
+        if (allResets.length > 0) r.sessionResetStr = allResets[0][1].trim();
+        if (allResets.length > 1) r.weeklyResetStr  = allResets[1][1].trim();
+        // Absolute day+time fallback: "Fri 10:00 AM", "Friday at 10:00 AM"
+        if (!r.weeklyResetStr) {
+            var dayPat = /(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\\s+(?:at\\s+)?\\d{1,2}:\\d{2}\\s*(?:AM|PM)/i;
+            var wr = body.match(dayPat);
+            if (wr) r.weeklyResetStr = wr[0].trim();
+        }
+        // "Resets on December 25"
         var rd = body.match(/resets?\\s+(?:on\\s+)?([A-Z][a-z]+\\s+\\d{1,2}(?:,?\\s*\\d{4})?)/i);
         if (rd) r.resetDateStr = rd[1].trim();
-        // Session reset: "Resets in 4 hr 29 min"
-        var sd = body.match(/resets?\\s+in\\s+(\\d[^\\n.]{2,30})/i);
-        if (sd) r.sessionResetStr = sd[1].trim();
 
         if (/rate\\s+limit(?:ed)?/i.test(body)) r.rateLimitStatus = 'Limited';
+
 
     } catch(e) { r.error = e.toString(); }
     return JSON.stringify(r);
@@ -358,7 +374,12 @@ for c in (candidates + nestedCandidates) {
             resetDate = parseRelativeDuration(sessionResetStr)
         }
 
-        let rawText = j["rawText"] as? String ?? ""
+        // 3. Weekly reset as relative duration: "23 hr 14 min" → weeklyResetDate
+        if !weeklyResetStr.isEmpty && weeklyResetDate == nil {
+            weeklyResetDate = parseRelativeDuration(weeklyResetStr)
+        }
+
+        _ = j["rawText"]
 
         var data = usageData ?? UsageData(
             planType: planType, messagesUsed: messagesUsed, messagesLimit: messagesLimit,
@@ -376,8 +397,11 @@ for c in (candidates + nestedCandidates) {
             data.sessionLimit = sessionLimit
         }
         if let rd = resetDate, data.resetDate == nil { data.resetDate = rd }
-        if let wd = weeklyResetDate { data.weeklyResetDate = wd }
-        if !weeklyResetStr.isEmpty { data.weeklyResetText = weeklyResetStr }
+        if let wd = weeklyResetDate { data.weeklyResetDate = wd; data.weeklyResetText = "" }
+        // Only use raw text for absolute day+time formats (e.g. "Fri 10:00 AM")
+        // Relative durations ("23 hr 14 min") are converted to Date above — don't store as text
+        let looksAbsolute = weeklyResetStr.range(of: #"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)"#, options: .regularExpression) != nil
+        if !weeklyResetStr.isEmpty && looksAbsolute { data.weeklyResetText = weeklyResetStr }
         data.rateLimitStatus = rateLimitStatus
         data.lastUpdated = Date()
 
