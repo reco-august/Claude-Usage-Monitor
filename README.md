@@ -220,4 +220,14 @@ MIT License. Feel free to use Claude Usage Monitor and contribute.
 
 ## Acknowledgements
 
-- **[DukeOfCheese](https://github.com/DukeOfCheese)** — proposed the migration from DOM scraping to direct API calls, the Sonnet usage bar, and the extra usage bar ([PR #3](https://github.com/theDanButuc/Claude-Usage-Monitor/pull/3)). These ideas shaped v2.0.0.
+| | |
+|---|---|
+| [![DukeOfCheese](https://github.com/DukeOfCheese.png?size=50)](https://github.com/DukeOfCheese) | **[DukeOfCheese](https://github.com/DukeOfCheese)** — proposed the migration from DOM scraping to direct API calls, the Sonnet usage bar, and the extra usage bar ([PR #3](https://github.com/theDanButuc/Claude-Usage-Monitor/pull/3)). These ideas shaped v2.0.0. |
+
+---
+
+## Stargazers
+
+Thanks to everyone who starred this repo!
+
+[![Stargazers](https://reporoster.com/stars/theDanButuc/Claude-Usage-Monitor)](https://github.com/theDanButuc/Claude-Usage-Monitor/stargazers)
