@@ -1,4 +1,4 @@
-# ClaudeUsageMonitor · v2.0.0
+# ClaudeUsageMonitor · v2.1.0
 
 A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usage in real time — no API key needed.
 
@@ -20,11 +20,12 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 - **Burn rate display** — menu bar shows estimated time left (`~45min left | 42%`) based on actual usage pace; falls back to percentage when idle
 - **Colour-coded icon** — green → orange → red as usage climbs
 - **Three-bar dashboard** — separate horizontal bars for Current session, Weekly limits (all models), and Sonnet-specific usage (Max plan)
+- **Daily routine runs** — tracks Claude Code Routine run budget per day (Pro: 5, Max: 15, Team/Enterprise: 25), shown automatically when your plan includes Routines
 - **Extra usage tracking** — displays monthly credit spend progress when Extra Usage is enabled on your account
 - **Direct API** — reads data straight from Claude's internal API; no DOM scraping, no JS injection
 - **Reset countdowns** — "Resets in X hr Y min" for the session window; "Resets [Day] [Time]" for weekly limits
 - **Configurable auto-refresh** — 30s / 1m / 2m / 5m / 10m, set via right-click menu
-- **Native notifications** — contextual alerts at 75%, 80%, 90%, 95%, 100% usage and on session reset
+- **Native notifications** — contextual alerts at 75%, 80%, 90%, 95%, 100% usage, on session reset, and when routine runs are running low or exhausted
 - **Smart tip banner** — in-popover tip that updates as usage climbs (75→80→90→95%)
 - **Stale data indicator** — icon turns grey and shows ⚠ if data is older than 10 minutes
 - **Right-click context menu** — quick usage info and settings without opening the popover
@@ -96,6 +97,7 @@ The left value shows **estimated time left** (burn rate) when active, or **Curre
   - **Weekly limits / All models** — billing-period usage with reset day and time (e.g. "Resets Fri 10:00 AM")
   - **Sonnet** — Sonnet-specific weekly usage (Max plan only)
   - **Extra usage** — monthly credit spend bar (X of Y credits), shown only when Extra Usage is enabled on your account
+  - **Daily routine runs** — run budget bar for Claude Code Routines (shown when your plan includes Routines)
 - **Refresh button** (↻) — force an immediate refresh
 - **Quit button** — exit the app
 
@@ -146,6 +148,7 @@ The app calls Claude's internal REST API directly:
 
 - `GET /api/organizations` — resolves your organisation ID (cached after first call)
 - `GET /api/organizations/{org_id}/usage` — returns utilization percentages and reset timestamps for all windows (`five_hour`, `seven_day`, `seven_day_sonnet`, `extra_usage`)
+- `GET /v1/code/routines/run-budget` — returns daily routine run budget (`used` / `limit`); called automatically after each usage refresh
 
 Auth is via the `sessionKey` cookie, extracted from the login WKWebView after OAuth and stored in `UserDefaults`. All subsequent requests are plain `URLSession` calls — no WKWebView or JS injection at runtime.
 
@@ -164,6 +167,7 @@ On first launch a browser window opens so you can log in to Claude.ai. The `sess
 | All bars show 0% | Session key may be invalid — quit, delete the app from Applications, reinstall and log in again |
 | Sonnet bar not visible | Only shown on Max plan accounts |
 | Extra usage bar not visible | Only shown when Extra Usage is enabled on your Claude account |
+| Routine runs bar not visible | Only shown when your plan includes Claude Code Routines (Pro, Max, Team, Enterprise) |
 | Icon missing from menu bar | Quit via the popover's Quit button and re-open the app |
 | App won't launch after macOS update | Rebuild from source with the updated SDK |
 
