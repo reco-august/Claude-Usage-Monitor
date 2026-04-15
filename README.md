@@ -6,6 +6,21 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 
 ---
 
+## Changelog
+
+### v2.1.0
+- **Daily routine runs** — new progress bar tracking Claude Code Routine run budget per day (Pro: 5/day, Max: 15/day, Team/Enterprise: 25/day); shown automatically when your plan includes Routines
+- **Routine run notifications** — alerts when 1 run remains and when all runs are exhausted for the day
+- Data fetched from a dedicated API endpoint (`/v1/code/routines/run-budget`), plan limits are read directly from the API — no hardcoding
+
+### v2.0.0
+- **Direct API** — migrated from DOM scraping + JS injection (WKWebView) to direct URLSession calls against Claude's internal REST API; faster, more reliable, no page-load delays
+- **Sonnet usage bar** — dedicated weekly progress bar for Sonnet model usage (Max plan only), contributed by [DukeOfCheese](https://github.com/DukeOfCheese)
+- **Extra usage bar** — monthly credit spend progress when Extra Usage is enabled on your account, contributed by [DukeOfCheese](https://github.com/DukeOfCheese)
+- **Cleaner auth flow** — session key extracted once from login WKWebView; all subsequent requests are plain URLSession with no browser overhead
+
+---
+
 ## Demo
 
 <img src="screenshots/recording.gif" alt="ClaudeUsageMonitor demo" />
