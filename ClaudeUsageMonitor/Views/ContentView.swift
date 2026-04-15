@@ -266,6 +266,20 @@ struct ContentView: View {
                                 extraUsageRow(data: data)
                             }
                         }
+
+                        if data.hasRoutineData {
+                            Divider()
+                                .opacity(0.3)
+                                .padding(.vertical, 14)
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Daily routine runs")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+
+                                routineRunsRow(data: data)
+                            }
+                        }
                     }
                 }
             }
@@ -365,6 +379,39 @@ struct ContentView: View {
                         .fill(barColor(for: data.extraUsagePercentage))
                         .frame(width: max(8, geo.size.width * CGFloat(data.extraUsagePercentage)), height: 8)
                         .animation(.spring(response: 0.7, dampingFraction: 0.8), value: data.extraUsagePercentage)
+                }
+            }
+            .frame(height: 8)
+        }
+    }
+
+    private func routineRunsRow(data: UsageData) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Runs today")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.primary)
+                    Text("\(data.routineRunsRemaining) of \(data.routineRunsLimit) remaining")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text("\(data.routineRunsUsed)/\(data.routineRunsLimit)")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.primary.opacity(0.10))
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(barColor(for: data.routineRunsPercentage))
+                        .frame(width: max(4, geo.size.width * CGFloat(data.routineRunsPercentage)), height: 8)
+                        .animation(.spring(response: 0.7, dampingFraction: 0.8), value: data.routineRunsPercentage)
                 }
             }
             .frame(height: 8)

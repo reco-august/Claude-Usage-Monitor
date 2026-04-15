@@ -71,6 +71,14 @@ final class ClaudeAPIService: ObservableObject {
         }
     }
 
+    // MARK: - Routine run budget (separate fetch, non-blocking)
+
+    func refreshRoutineBudget() {
+        guard let key = sessionKey, !key.isEmpty,
+              let id = orgId else { return }
+        fetchRoutineBudget(sessionKey: key, orgId: id)
+    }
+
     // MARK: - Request builder
 
     private func makeRequest(path: String, sessionKey: String) -> URLRequest {
@@ -122,6 +130,38 @@ final class ClaudeAPIService: ObservableObject {
         }.resume()
     }
 
+    private func fetchRoutineBudget(sessionKey: String, orgId: String) {
+        var req = URLRequest(url: URL(string: "https://claude.ai/v1/code/routines/run-budget")!)
+        req.timeoutInterval = 15
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        req.setValue("https://claude.ai/settings/usage", forHTTPHeaderField: "Referer")
+        req.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
+        req.setValue("empty",       forHTTPHeaderField: "Sec-Fetch-Dest")
+        req.setValue("cors",        forHTTPHeaderField: "Sec-Fetch-Mode")
+        req.setValue("same-origin", forHTTPHeaderField: "Sec-Fetch-Site")
+        req.setValue("2023-06-01",  forHTTPHeaderField: "anthropic-version")
+        req.setValue("ccr-triggers-2026-01-30", forHTTPHeaderField: "anthropic-beta")
+        req.setValue(orgId,         forHTTPHeaderField: "x-organization-uuid")
+        req.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+            forHTTPHeaderField: "User-Agent"
+        )
+        urlSession.dataTask(with: req) { [weak self] data, response, _ in
+            guard let self else { return }
+            let http = response as? HTTPURLResponse
+            guard let data, http?.statusCode == 200,
+                  let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+            let used  = Int(body["used"]  as? String ?? "") ?? (body["used"]  as? Int ?? 0)
+            let limit = Int(body["limit"] as? String ?? "") ?? (body["limit"] as? Int ?? 0)
+            DispatchQueue.main.async {
+                self.usageData?.routineRunsUsed  = used
+                self.usageData?.routineRunsLimit = limit
+            }
+        }.resume()
+    }
+
     private func fetchUsage(sessionKey: String, orgId: String) {
         let req = makeRequest(path: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
         urlSession.dataTask(with: req) { [weak self] data, response, error in
@@ -146,6 +186,7 @@ final class ClaudeAPIService: ObservableObject {
                 self.usageData    = APIResponseParser.parse(body)
                 self.errorMessage = nil
                 self.needsLogin   = false
+                self.fetchRoutineBudget(sessionKey: sessionKey, orgId: orgId)
             }
         }.resume()
     }

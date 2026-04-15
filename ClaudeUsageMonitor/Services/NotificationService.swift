@@ -11,6 +11,10 @@ final class NotificationService {
     /// Last known reset date — used to detect when a new window starts.
     private var lastKnownResetDate: Date?
 
+    /// Whether we've already notified the user that routine runs are almost exhausted today.
+    private var notifiedRoutineRunsLow = false
+    private var notifiedRoutineRunsExhausted = false
+
     // MARK: - Permission
 
     func requestPermission() {
@@ -22,6 +26,7 @@ final class NotificationService {
     func checkAndNotify(data: UsageData) {
         checkUsageThresholds(data: data)
         checkSessionReset(data: data)
+        checkRoutineRunsBudget(data: data)
     }
 
     // MARK: - Usage threshold alerts
@@ -62,6 +67,36 @@ final class NotificationService {
         content.sound = .default
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+    }
+
+    // MARK: - Routine run budget alerts
+
+    private func checkRoutineRunsBudget(data: UsageData) {
+        guard data.hasRoutineData else { return }
+
+        // Reset flags if budget was replenished (new day)
+        if data.routineRunsUsed == 0 {
+            notifiedRoutineRunsLow = false
+            notifiedRoutineRunsExhausted = false
+            return
+        }
+
+        if data.routineRunsRemaining == 0 && !notifiedRoutineRunsExhausted {
+            notifiedRoutineRunsExhausted = true
+            notifiedRoutineRunsLow = true
+            sendAlert(
+                title: "No routine runs left today",
+                body: "You've used all \(data.routineRunsLimit) daily routine runs. Runs reset tomorrow.",
+                id: "claude-routine-exhausted"
+            )
+        } else if data.routineRunsRemaining == 1 && !notifiedRoutineRunsLow {
+            notifiedRoutineRunsLow = true
+            sendAlert(
+                title: "1 routine run remaining today",
+                body: "You've used \(data.routineRunsUsed) of \(data.routineRunsLimit) daily routine runs.",
+                id: "claude-routine-low"
+            )
+        }
     }
 
     // MARK: - Session reset detection

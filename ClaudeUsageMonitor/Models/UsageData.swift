@@ -13,6 +13,8 @@ struct UsageData {
     var extraUsageLimit: Double = 0  // € monthly spend limit for extra usage
     var sonnetPercentage: Double = 0 // seven_day_sonnet utilization (0–1), Max users only
     var sonnetResetDate: Date? = nil // seven_day_sonnet.resets_at
+    var routineRunsUsed:  Int = 0   // daily routine runs used (/v1/code/routines/run-budget)
+    var routineRunsLimit: Int = 0   // daily routine runs limit (plan-specific: Pro=5, Max=15, Team/Enterprise=25)
     var rateLimitStatus: String
     var lastUpdated:     Date
 
@@ -45,6 +47,15 @@ struct UsageData {
     var hasExtraUsage: Bool { extraUsageLimit > 0 }
 
     var hasSonnetData: Bool { sonnetPercentage > 0 }
+
+    var hasRoutineData: Bool { routineRunsLimit > 0 }
+
+    var routineRunsPercentage: Double {
+        guard routineRunsLimit > 0 else { return 0 }
+        return min(1.0, Double(routineRunsUsed) / Double(routineRunsLimit))
+    }
+
+    var routineRunsRemaining: Int { max(0, routineRunsLimit - routineRunsUsed) }
 
     var sonnetResetLabel: String? {
         guard let date = sonnetResetDate else { return nil }
