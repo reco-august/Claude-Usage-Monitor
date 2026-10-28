@@ -14,6 +14,8 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
     var onLoginSuccess: (() -> Void)?
     private var webView: WKWebView!
     private var popupWindows: [WKWebView: NSWindow] = [:]
+    private var cookiePoll: Timer?
+    private var didSucceed = false
 
     convenience init() {
         let window = NSWindow(
@@ -74,6 +76,11 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
         // Load settings/usage — redirects to /login if not authenticated,
         // goes directly to the page if already logged in.
         webView.load(URLRequest(url: URL(string: "https://claude.ai/settings/usage")!))
+
+        // OAuth flows finish via in-page JS, with no navigation event, so poll the cookie store.
+        cookiePoll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.extractSessionKey()
+        }
     }
 
     // MARK: - WKNavigationDelegate
@@ -128,7 +135,9 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
             // No domain filter — cookie domain varies (.claude.ai vs claude.ai)
             let key = cookies.first { $0.name == "sessionKey" }?.value
             DispatchQueue.main.async {
-                if let key {
+                if let key, !self.didSucceed {
+                    self.didSucceed = true
+                    self.cookiePoll?.invalidate()
                     ClaudeAPIService.shared.sessionKey = key
                     self.onLoginSuccess?()
                 }
@@ -140,6 +149,8 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
     // MARK: - NSWindowDelegate
 
     func windowWillClose(_ notification: Notification) {
-        // Nothing special — AppDelegate handles the nil case
+        cookiePoll?.invalidate()
+        popupWindows.values.forEach { $0.close() }
+        popupWindows.removeAll()
     }
 }
