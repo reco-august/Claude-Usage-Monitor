@@ -9,10 +9,11 @@ import SwiftUI
 // Does NOT depend on WebScrapingService.
 // ─────────────────────────────────────────────────────────────────────────────
 
-final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate {
+final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
 
     var onLoginSuccess: (() -> Void)?
     private var webView: WKWebView!
+    private var popupWindows: [WKWebView: NSWindow] = [:]
 
     convenience init() {
         let window = NSWindow(
@@ -40,6 +41,7 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
+        webView.uiDelegate = self
         webView.customUserAgent =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
             "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
@@ -82,6 +84,39 @@ final class LoginWindowController: NSWindowController, NSWindowDelegate, WKNavig
         guard !url.contains("/login") && !url.contains("/oauth") && url.contains("claude.ai") else {
             return
         }
+        extractSessionKey()
+    }
+
+    // MARK: - WKUIDelegate (OAuth popups, e.g. "Continue with Google")
+
+    // The popup must be created from the supplied configuration so it shares the
+    // opener's cookie store and can call back into it via window.opener.
+    func webView(_ webView: WKWebView,
+                 createWebViewWith configuration: WKWebViewConfiguration,
+                 for navigationAction: WKNavigationAction,
+                 windowFeatures: WKWindowFeatures) -> WKWebView? {
+        let popup = WKWebView(frame: NSRect(x: 0, y: 0, width: 520, height: 680), configuration: configuration)
+        popup.customUserAgent = self.webView.customUserAgent
+        popup.uiDelegate = self
+        popup.navigationDelegate = self
+
+        let win = NSWindow(
+            contentRect: popup.frame,
+            styleMask:   [.titled, .closable, .resizable],
+            backing:     .buffered,
+            defer:       false
+        )
+        win.title = "Sign in"
+        win.contentView = popup
+        win.isReleasedWhenClosed = false
+        win.center()
+        win.makeKeyAndOrderFront(nil)
+        popupWindows[popup] = win
+        return popup
+    }
+
+    func webViewDidClose(_ webView: WKWebView) {
+        popupWindows.removeValue(forKey: webView)?.close()
         extractSessionKey()
     }
 
