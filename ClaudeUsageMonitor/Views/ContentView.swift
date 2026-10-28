@@ -3,8 +3,6 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var service: ClaudeAPIService
 
-    @EnvironmentObject var updater: UpdateService
-
     private var refreshIntervalLabel: String {
         let interval = UserDefaults.standard.double(forKey: "refreshInterval")
         let secs = interval > 0 ? interval : 120
@@ -22,9 +20,6 @@ struct ContentView: View {
 
             VStack(spacing: 0) {
                 header
-                if updater.updateState != .none {
-                    updateBanner
-                }
                 Divider().opacity(0.4)
                 scrollableContent
                 Divider().opacity(0.4)
@@ -99,93 +94,6 @@ struct ContentView: View {
             }
         }
         .padding(16)
-    }
-
-    // MARK: - Update banner
-
-    private var updateBanner: some View {
-        Group {
-            switch updater.updateState {
-            case .none:
-                EmptyView()
-
-            case .available(let version, let downloadURL):
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .foregroundStyle(.blue)
-                        .font(.system(size: 13))
-                    Text("v\(version) available")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Button("Update Now") {
-                        updater.downloadUpdate(from: downloadURL)
-                    }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.blue)
-                    .buttonStyle(.plain)
-
-                    Button {
-                        updater.updateState = .none
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.blue.opacity(0.08))
-
-            case .downloading(let progress):
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.down.circle")
-                        .foregroundStyle(.blue)
-                        .font(.system(size: 13))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Downloading… \(Int(progress * 100))%")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.primary)
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.primary.opacity(0.10))
-                                    .frame(height: 3)
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.blue)
-                                    .frame(width: geo.size.width * CGFloat(progress), height: 3)
-                            }
-                        }
-                        .frame(height: 3)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.blue.opacity(0.08))
-
-            case .ready(let localURL):
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.system(size: 13))
-                    Text("Update ready")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Button("Open & Install") {
-                        NSWorkspace.shared.open(localURL)
-                        updater.updateState = .none
-                    }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.green)
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.green.opacity(0.08))
-            }
-        }
     }
 
     // MARK: - Stale data banner

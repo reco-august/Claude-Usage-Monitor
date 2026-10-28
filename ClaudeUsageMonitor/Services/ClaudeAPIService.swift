@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Security
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ClaudeAPIService — replaces WebScrapingService.
@@ -23,8 +24,8 @@ final class ClaudeAPIService: ObservableObject {
     // MARK: - Persisted credentials
 
     var sessionKey: String? {
-        get { UserDefaults.standard.string(forKey: "claudeSessionKey") }
-        set { UserDefaults.standard.set(newValue, forKey: "claudeSessionKey") }
+        get { Keychain.read() }
+        set { Keychain.write(newValue) }
     }
 
     private var orgId: String? {
@@ -191,6 +192,35 @@ final class ClaudeAPIService: ObservableObject {
         }.resume()
     }
 
+}
+
+// MARK: - Keychain storage for the session cookie
+
+private enum Keychain {
+    private static let query: [String: Any] = [
+        kSecClass as String:       kSecClassGenericPassword,
+        kSecAttrService as String: "ClaudeUsageMonitor",
+        kSecAttrAccount as String: "claudeSessionKey",
+    ]
+
+    static func read() -> String? {
+        var q = query
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var out: AnyObject?
+        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess,
+              let data = out as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func write(_ value: String?) {
+        SecItemDelete(query as CFDictionary)
+        guard let data = value?.data(using: .utf8) else { return }
+        var q = query
+        q[kSecValueData as String] = data
+        q[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        SecItemAdd(q as CFDictionary, nil)
+    }
 }
 
 // MARK: - Response parser
