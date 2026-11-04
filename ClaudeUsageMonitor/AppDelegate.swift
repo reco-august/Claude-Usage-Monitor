@@ -14,7 +14,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let service       = ClaudeAPIService.shared
     private let notifications = NotificationService.shared
 
-    private var usageHistory: [(date: Date, pct: Double)] = []
 
     // MARK: - Refresh interval (persisted in UserDefaults)
 
@@ -95,16 +94,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Current usage info
         if let data = service.usageData {
-            let pctStr = "\(Int(data.usagePercentage * 100))%"
+            let pctStr = "\(Int(data.weeklyPercentage * 100))%"
             let usageItem = NSMenuItem(
-                title: "\(data.primaryUsed)/\(data.primaryLimit)  (\(pctStr))",
+                title: "Weekly: \(data.messagesUsed)/\(data.messagesLimit)  (\(pctStr))",
                 action: nil,
                 keyEquivalent: ""
             )
             usageItem.isEnabled = false
             menu.addItem(usageItem)
 
-            if data.resetDate != nil {
+            if data.weeklyResetDate != nil {
                 let resetItem = NSMenuItem(
                     title: "Resets in \(data.timeUntilReset)",
                     action: nil,
@@ -212,19 +211,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.updateIcon(data: nil)
                     return
                 }
-                // Detect session reset (pct dropped) → clear history
-                if data.sessionPercentage < (self.usageHistory.last?.pct ?? 0) - 0.01 {
-                    self.usageHistory.removeAll()
-                }
-                // Append current point, keep last 10
-                self.usageHistory.append((date: Date(), pct: data.sessionPercentage))
-                if self.usageHistory.count > 10 { self.usageHistory.removeFirst() }
-
-                // Enrich a local copy — never write back to service.usageData
-                var enriched = data
-                enriched.usageHistory = self.usageHistory
-                self.updateIcon(data: enriched)
-                self.notifications.checkAndNotify(data: enriched)
+                self.updateIcon(data: data)
+                self.notifications.checkAndNotify(data: data)
             }
             .store(in: &cancellables)
 

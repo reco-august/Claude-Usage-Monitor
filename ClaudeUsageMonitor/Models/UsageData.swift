@@ -2,12 +2,9 @@ import Foundation
 
 struct UsageData {
     var planType:        String
-    var messagesUsed:    Int        // billing-period total (from DOM)
-    var messagesLimit:   Int        // billing-period limit  (from DOM)
-    var sessionUsed:     Int = 0   // current rate-limit window (from API interceptor)
-    var sessionLimit:    Int = 0   // current rate-limit window (from API interceptor)
-    var resetDate:       Date?     // near-term reset (session window, from API)
-    var weeklyResetDate: Date?     // billing period / weekly reset (from DOM parsed date)
+    var messagesUsed:    Int        // weekly (seven_day) utilization, 0–100
+    var messagesLimit:   Int        // 100 when weekly data present, else 0
+    var weeklyResetDate: Date?     // seven_day.resets_at
     var weeklyResetText: String = "" // raw weekday+time string e.g. "Fri 10:00 AM"
     var extraUsageSpent: Double = 0  // € spent on extra usage this billing period
     var extraUsageLimit: Double = 0  // € monthly spend limit for extra usage
@@ -20,26 +17,7 @@ struct UsageData {
     var rateLimitStatus: String
     var lastUpdated:     Date
 
-    // MARK: - Burn rate history
-    // Rolling window of (timestamp, sessionPercentage) — max 10 points
-    var usageHistory: [(date: Date, pct: Double)] = []
-
     // MARK: - Computed
-
-    var hasSessionData: Bool { sessionLimit > 0 }
-
-    var primaryUsed:  Int { hasSessionData ? sessionUsed  : messagesUsed  }
-    var primaryLimit: Int { hasSessionData ? sessionLimit : messagesLimit }
-
-    var usagePercentage: Double {
-        guard primaryLimit > 0 else { return 0 }
-        return min(1.0, Double(primaryUsed) / Double(primaryLimit))
-    }
-
-    var sessionPercentage: Double {
-        guard sessionLimit > 0 else { return 0 }
-        return min(1.0, Double(sessionUsed) / Double(sessionLimit))
-    }
 
     var weeklyPercentage: Double {
         guard messagesLimit > 0 else { return 0 }
@@ -80,50 +58,11 @@ struct UsageData {
         return min(1.0, extraUsageSpent / extraUsageLimit)
     }
 
-    var messagesRemaining: Int { max(0, primaryLimit - primaryUsed) }
-
-    // MARK: - Burn rate
-
-    /// Messages-per-minute consumed based on rolling history.
-    /// Returns nil if < 2 points or < 5 minutes of data (too noisy).
-    var burnRatePerMinute: Double? {
-        guard usageHistory.count >= 2 else { return nil }
-        let oldest = usageHistory.first!
-        let newest = usageHistory.last!
-        let minutes = newest.date.timeIntervalSince(oldest.date) / 60.0
-        guard minutes >= 5 else { return nil }
-        let consumed = newest.pct - oldest.pct
-        guard consumed > 0 else { return nil }
-        return consumed / minutes
-    }
-
-    /// Estimated minutes until session hits 100%, capped at actual resetDate.
-    var estimatedMinutesRemaining: Double? {
-        guard let rate = burnRatePerMinute, rate > 0 else { return nil }
-        let remaining = 1.0 - sessionPercentage
-        let estimated = remaining / rate
-        if let reset = resetDate {
-            let actual = reset.timeIntervalSince(Date()) / 60.0
-            guard actual > 0 else { return nil }
-            return min(estimated, actual)
-        }
-        return estimated
-    }
-
-    /// "~45min left" or "~2h 3m left" — nil if burn rate unavailable
-    var burnRateLabel: String? {
-        guard let mins = estimatedMinutesRemaining else { return nil }
-        if mins < 60 { return "~\(Int(mins))min left" }
-        let h = Int(mins / 60)
-        let m = Int(mins.truncatingRemainder(dividingBy: 60))
-        return m > 0 ? "~\(h)h \(m)m left" : "~\(h)h left"
-    }
-
     // MARK: - Reset labels
 
     var timeUntilReset: String {
-        guard let resetDate else { return "—" }
-        let secs = resetDate.timeIntervalSince(Date())
+        guard let weeklyResetDate else { return "—" }
+        let secs = weeklyResetDate.timeIntervalSince(Date())
         guard secs > 0 else { return "Soon" }
         let totalMins = Int(secs / 60)
         let h = totalMins / 60
@@ -133,17 +72,6 @@ struct UsageData {
         if h > 0     { return "\(h)h \(m)m" }
         if m > 0     { return "\(m)m" }
         return "< 1m"
-    }
-
-    var sessionResetLabel: String? {
-        guard let date = resetDate else { return nil }
-        let secs = date.timeIntervalSince(Date())
-        guard secs > 60 else { return nil }
-        let totalMins = Int(secs / 60)
-        let h = totalMins / 60
-        let m = totalMins % 60
-        if h > 0 { return "Resets in \(h) hr \(m) min" }
-        return "Resets in \(m) min"
     }
 
     var weeklyResetLabel: String? {
@@ -161,19 +89,7 @@ struct UsageData {
 
     // MARK: - Menu bar label
     var menuBarLabel: String {
-        let sessionStr: String?
-        if hasSessionData {
-            sessionStr = "\(Int(sessionPercentage * 100))%"
-        } else {
-            sessionStr = nil
-        }
-        let wPct = messagesLimit > 0 ? "\(Int(weeklyPercentage * 100))%" : nil
-        switch (sessionStr, wPct) {
-        case let (s?, w?): return "\(s) | \(w)"
-        case let (s?, nil): return s
-        case let (nil, w?): return w
-        default: return ""
-        }
+        messagesLimit > 0 ? "\(Int(weeklyPercentage * 100))%" : ""
     }
 
     // MARK: - Tips
@@ -190,7 +106,7 @@ struct UsageData {
     }
 
     var currentTips: [UsageTip] {
-        let pct = sessionPercentage * 100
+        let pct = weeklyPercentage * 100
         var tips: [UsageTip] = []
 
         if pct >= 20 {
@@ -229,7 +145,7 @@ struct UsageData {
         if pct >= 75 {
             tips.append(UsageTip(
                 icon: "checkmark.circle.fill",
-                message: "Wrap up long threads. Save important outputs before your session resets.",
+                message: "Wrap up long threads. Save important outputs before your weekly limit resets.",
                 actions: []
             ))
         }
@@ -245,7 +161,7 @@ struct UsageData {
         if pct >= 95 {
             tips.append(UsageTip(
                 icon: "xmark.octagon.fill",
-                message: "Almost out. Save your work now. \(sessionResetLabel ?? "Session resets soon").",
+                message: "Almost out. Save your work now. \(weeklyResetLabel ?? "Resets soon").",
                 actions: []
             ))
         }

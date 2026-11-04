@@ -177,19 +177,6 @@ struct ContentView: View {
             if let data = service.usageData {
                 TimelineView(.periodic(from: .now, by: 60)) { _ in
                     VStack(spacing: 0) {
-                        // Current session bar
-                        usageBarRow(
-                            title: "Current session",
-                            resetLabel: data.sessionResetLabel,
-                            used: data.sessionUsed,
-                            limit: data.sessionLimit,
-                            progress: data.sessionPercentage
-                        )
-
-                        Divider()
-                            .opacity(0.3)
-                            .padding(.vertical, 14)
-
                         // Weekly limits section
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Weekly limits")

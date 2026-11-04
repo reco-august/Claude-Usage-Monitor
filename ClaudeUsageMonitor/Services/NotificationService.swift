@@ -5,7 +5,7 @@ final class NotificationService {
     static let shared = NotificationService()
     private init() {}
 
-    /// Thresholds already notified in the current session window.
+    /// Thresholds already notified in the current weekly window.
     private var notifiedThresholds = Set<Int>()
 
     /// Last known reset date — used to detect when a new window starts.
@@ -25,27 +25,26 @@ final class NotificationService {
 
     func checkAndNotify(data: UsageData) {
         checkUsageThresholds(data: data)
-        checkSessionReset(data: data)
+        checkWeeklyReset(data: data)
         checkRoutineRunsBudget(data: data)
     }
 
     // MARK: - Usage threshold alerts
 
     private func checkUsageThresholds(data: UsageData) {
-        // Use sessionPercentage (rate-limit window), fall back to usagePercentage
-        let pct = data.hasSessionData ? data.sessionPercentage : data.usagePercentage
+        let pct = data.weeklyPercentage
 
         let config: [(threshold: Int, title: String, body: String)] = [
-            (75, "Halfway through your session",
+            (75, "Weekly limit at 75%",
                  "Consider wrapping up long threads. Start fresh conversations for new topics."),
-            (80, "Session at 80%",
+            (80, "Weekly limit at 80%",
                  "Avoid new long projects or file uploads. Best for: quick questions, short edits, code review."),
-            (90, "Session at 90% — act fast",
+            (90, "Weekly limit at 90% — act fast",
                  "~10% left. Finish your current task and save important outputs before the limit hits."),
             (95, "Almost out",
-                 "Save your work now. \(data.sessionResetLabel ?? "Session resets soon")."),
+                 "Save your work now. \(data.weeklyResetLabel ?? "Resets soon")."),
             (100, "Claude Limit Reached",
-                  "You've used your full quota. \(data.sessionResetLabel ?? "Resets soon").")
+                  "You've used your full quota. \(data.weeklyResetLabel ?? "Resets soon").")
         ]
 
         for item in config {
@@ -99,16 +98,16 @@ final class NotificationService {
         }
     }
 
-    // MARK: - Session reset detection
+    // MARK: - Weekly reset detection
 
-    private func checkSessionReset(data: UsageData) {
-        guard let newReset = data.resetDate else { return }
+    private func checkWeeklyReset(data: UsageData) {
+        guard let newReset = data.weeklyResetDate else { return }
 
         if let known = lastKnownResetDate, newReset > known.addingTimeInterval(3600) {
             notifiedThresholds.removeAll()
             sendAlert(
-                title: "Claude Session Reset",
-                body: "Your usage window has reset. You have a full quota available.",
+                title: "Claude Weekly Limit Reset",
+                body: "Your weekly usage has reset. You have a full quota available.",
                 id: "claude-reset-\(Int(Date().timeIntervalSince1970))"
             )
         }

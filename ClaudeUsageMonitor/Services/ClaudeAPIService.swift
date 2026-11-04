@@ -228,7 +228,6 @@ private enum Keychain {
 private enum APIResponseParser {
 
     static func parse(_ body: [String: Any]) -> UsageData {
-        let fiveHour    = body["five_hour"]        as? [String: Any]
         let sevenDay    = body["seven_day"]        as? [String: Any]
         let extraUsage  = body["extra_usage"]      as? [String: Any]
 
@@ -244,19 +243,15 @@ private enum APIResponseParser {
 
         let tierRaw = body["rate_limit_tier"] as? String ?? ""
 
-        let sessionPct        = utilization(fiveHour)
         let weeklyPct         = utilization(sevenDay)
         let sonnetPct         = utilization(sonnet)
         let claudeDesignPct   = utilization(claudeDesign)
 
-        let resetDate              = isoDate(fiveHour?["resets_at"])
         let weeklyResetDate        = isoDate(sevenDay?["resets_at"])
         let sonnetResetDate        = isoDate(sonnet?["resets_at"])
         let claudeDesignResetDate  = isoDate(claudeDesign?["resets_at"])
 
         // Synthesise used/limit from percentage for backward-compat with UI (shows "42/100")
-        let sessionUsed  = Int((sessionPct * 100).rounded())
-        let sessionLimit = sessionPct > 0 ? 100 : 0
         let msgUsed      = Int((weeklyPct * 100).rounded())
         let msgLimit     = weeklyPct > 0 ? 100 : 0
 
@@ -272,12 +267,9 @@ private enum APIResponseParser {
             planType:        planType(from: tierRaw),
             messagesUsed:    msgUsed,
             messagesLimit:   msgLimit,
-            resetDate:       resetDate,
             rateLimitStatus: "Normal",
             lastUpdated:     Date()
         )
-        data.sessionUsed      = sessionUsed
-        data.sessionLimit     = sessionLimit
         data.weeklyResetDate  = weeklyResetDate
         data.weeklyResetText  = weeklyResetText
         data.sonnetPercentage        = sonnetPct
