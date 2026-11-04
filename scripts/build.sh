@@ -7,6 +7,7 @@
 #   ./scripts/build.sh             # builds current arch
 #   ./scripts/build.sh --version 1.2.0
 #   ./scripts/build.sh --universal  # arm64 + x86_64 fat binary
+#   ./scripts/build.sh --no-install # skip replacing /Applications copy
 set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -20,12 +21,15 @@ APP_NAME="ClaudeUsageMonitor"
 BUNDLE_ID="com.yourname.ClaudeUsageMonitor"
 VERSION="1.5.0"
 UNIVERSAL=false
+INSTALL=true
+INSTALL_PATH="/Applications/$APP_NAME.app"
 
 # ── Parse args ────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
   case $1 in
     --version) VERSION="$2"; shift 2 ;;
     --universal) UNIVERSAL=true; shift ;;
+    --no-install) INSTALL=false; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -135,6 +139,17 @@ fi
 codesign --force --deep --sign - "$APP_BUNDLE"
 echo "✔ Signed (ad-hoc)"
 
+# ── Install in place ─────────────────────────────────────────────────────────
+# Replaces the installed copy and relaunches it, so only one binary ever reads
+# the Keychain item (ad-hoc signatures get a Keychain prompt per new binary).
+if $INSTALL; then
+  pkill -x "$APP_NAME" 2>/dev/null && sleep 1 || true
+  rm -rf "$INSTALL_PATH"
+  cp -R "$APP_BUNDLE" "$INSTALL_PATH"
+  open "$INSTALL_PATH"
+  echo "✔ Installed to $INSTALL_PATH and relaunched"
+fi
+
 # ── Create DMG ────────────────────────────────────────────────────────────────
 mkdir -p "$DIST_DIR"
 DMG_PATH="$DIST_DIR/${APP_NAME}-v${VERSION}.dmg"
@@ -162,6 +177,6 @@ echo "│  Output"
 echo "│  App : $APP_BUNDLE"
 echo "│  DMG : $DMG_PATH"
 echo "├──────────────────────────────────────────────────────────┤"
-echo "│  Install: open the DMG and drag to Applications."
-echo "│  First launch: right-click → Open (app is unsigned)."
+echo "│  Other Macs: open the DMG and drag to Applications,"
+echo "│  then right-click → Open on first launch (app is unsigned)."
 echo "└──────────────────────────────────────────────────────────┘"

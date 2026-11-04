@@ -149,6 +149,7 @@ cd Claude-Usage-Monitor
 
 bash scripts/build.sh             # native arch (arm64 or x86_64)
 bash scripts/build.sh --universal # universal binary (arm64 + x86_64)
+bash scripts/build.sh --no-install # build + DMG only, leave /Applications alone
 ```
 
 Produces `dist/ClaudeUsageMonitor-vX.X.X.dmg` ready to install.
