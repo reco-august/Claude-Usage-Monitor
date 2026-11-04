@@ -23,9 +23,11 @@ final class ClaudeAPIService: ObservableObject {
 
     // MARK: - Persisted credentials
 
+    // Cached in memory: the ad-hoc signature means every Keychain read prompts.
+    private lazy var cachedSessionKey: String? = Keychain.read()
     var sessionKey: String? {
-        get { Keychain.read() }
-        set { Keychain.write(newValue) }
+        get { cachedSessionKey }
+        set { cachedSessionKey = newValue; Keychain.write(newValue) }
     }
 
     private var orgId: String? {
