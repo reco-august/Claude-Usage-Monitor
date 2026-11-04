@@ -49,13 +49,6 @@ struct ContentView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            LinearGradient(
-                colors: [Color.accentColor.opacity(0.10), Color.clear],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
     }
 
     private func planBadge(_ plan: String) -> some View {
