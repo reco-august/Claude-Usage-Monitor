@@ -16,20 +16,14 @@
 		A8B2700E7F1063CEAE441A12 /* WebScrapingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FD4295EED2804845B35E6B7 /* WebScrapingService.swift */; };
 		BA46BB237A9B0627B2CB20E9 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6BB1E308811B53F197A0E4FE /* AppIcon.icns */; };
 		BE196E6AA7BA22D9463F8F75 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1562A3CFCD83EE9BBE110AC /* AppDelegate.swift */; };
-		C6F008B4B0C2FA51A08BD434 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98237EC71645FF0A6506841E /* ContentView.swift */; };
-		EDE77099FED242BEA86746BE /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5D9542C42525C39B2586A4 /* CircularProgressView.swift */; };
-		AA1B2C3D4E5F6A7B8C9D0E1F /* TipRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* TipRowView.swift */; };
 		F4A79DA9CC2CD8233449A810 /* LoginWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1DE12C61F8C55E73839CE45 /* LoginWindowController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1A0B24B9F71A399D1947B5FE /* AppIcon_128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon_128.png; sourceTree = "<group>"; };
-		2F5D9542C42525C39B2586A4 /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
-		BB2C3D4E5F6A7B8C9D0E1F2A /* TipRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipRowView.swift; sourceTree = "<group>"; };
 		AABB0001CC000001DDEE0001 /* ClaudeAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAPIService.swift; sourceTree = "<group>"; };
 		4FD4295EED2804845B35E6B7 /* WebScrapingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebScrapingService.swift; sourceTree = "<group>"; };
 		6BB1E308811B53F197A0E4FE /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
-		98237EC71645FF0A6506841E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B009053A70EDBBF9EA0DAF9F /* ClaudeUsageMonitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeUsageMonitor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C474AFBE78EC7F5070C5874B /* ClaudeUsageMonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageMonitorApp.swift; sourceTree = "<group>"; };
 		D41A76CF0DAEE0BF91BDBF42 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
@@ -65,16 +59,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C7D6EE5D95D840F2880FE1F2 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				2F5D9542C42525C39B2586A4 /* CircularProgressView.swift */,
-				98237EC71645FF0A6506841E /* ContentView.swift */,
-				BB2C3D4E5F6A7B8C9D0E1F2A /* TipRowView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
 		E189EC1DBE99F718EE90F7CB /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -103,7 +87,6 @@
 				27551130C613B863E3C990F6 /* Assets */,
 				3E57058566D4BD73A0ECBA49 /* Models */,
 				E189EC1DBE99F718EE90F7CB /* Services */,
-				C7D6EE5D95D840F2880FE1F2 /* Views */,
 			);
 			path = ClaudeUsageMonitor;
 			sourceTree = "<group>";
@@ -180,10 +163,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BE196E6AA7BA22D9463F8F75 /* AppDelegate.swift in Sources */,
-				EDE77099FED242BEA86746BE /* CircularProgressView.swift in Sources */,
-				AA1B2C3D4E5F6A7B8C9D0E1F /* TipRowView.swift in Sources */,
 				A67C19D5BA946388EAF48165 /* ClaudeUsageMonitorApp.swift in Sources */,
-				C6F008B4B0C2FA51A08BD434 /* ContentView.swift in Sources */,
 				F4A79DA9CC2CD8233449A810 /* LoginWindowController.swift in Sources */,
 				131AC9E7E8F564BB33DB286D /* NotificationService.swift in Sources */,
 				70D8340077A6F4987543D69A /* UpdateService.swift in Sources */,

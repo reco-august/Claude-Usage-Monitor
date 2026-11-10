@@ -32,8 +32,6 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 
 <img src="screenshots/recording.gif" alt="ClaudeUsageMonitor demo" />
 
-<img src="screenshots/Screenshot.png" width="260" alt="ClaudeUsageMonitor popover" />
-<img src="screenshots/Extra Usage.png" width="260" alt="ClaudeUsageMonitor - extra usage bar" />
 
 ---
 
@@ -41,16 +39,14 @@ A native macOS menu-bar app that tracks your [Claude.ai](https://claude.ai) usag
 
 - **Menu-bar only** — no Dock icon, stays out of your way
 - **Colour-coded icon** — green → orange → red as usage climbs
-- **Multi-bar dashboard** — separate horizontal bars for Weekly limits (all models), Sonnet-specific usage (Max plan), and Claude Design usage
 - **Daily routine runs** — tracks Claude Code Routine run budget per day (Pro: 5, Max: 15, Team/Enterprise: 25), shown automatically when your plan includes Routines
 - **Extra usage tracking** — displays monthly credit spend progress when Extra Usage is enabled on your account
 - **Direct API** — reads data straight from Claude's internal API; no DOM scraping, no JS injection
 - **Reset countdowns** — "Resets [Day] [Time]" for weekly limits
-- **Configurable auto-refresh** — 30s / 1m / 2m / 5m / 10m, set via right-click menu
+- **Configurable auto-refresh** — 30s / 1m / 2m / 5m / 10m, set via the menu
 - **Native notifications** — contextual alerts at 75%, 80%, 90%, 95%, 100% weekly usage, on weekly reset, and when routine runs are running low or exhausted
-- **Smart tip banner** — in-popover tip that updates as usage climbs (75→80→90→95%)
 - **Stale data indicator** — icon turns grey and shows ⚠ if data is older than 10 minutes
-- **Right-click context menu** — quick usage info and settings without opening the popover
+- **Click menu** — usage, reset countdown, refresh interval and quit
 - **In-app update banner** — notified when a new version is available on GitHub; checks every hour automatically
 - **One-click update download** — "Update Now" downloads the DMG in-app with a progress bar; "Open & Install" opens it in Finder for drag-install (1 step)
 - **Persisted login** — you only log in once; session is reused automatically
@@ -113,18 +109,7 @@ brew install --cask claude-usage-monitor
 
 The value is **Weekly limits %**.
 
-**Left-click** the icon to open the popover:
-
-- **Plan usage limits** section with progress bars:
-  - **Weekly limits / All models** — billing-period usage with reset day and time (e.g. "Resets Fri 10:00 AM")
-  - **Sonnet** — Sonnet-specific weekly usage (Max plan only)
-  - **Claude Design** — weekly Claude Design usage bar, shown automatically when your plan includes a Claude Design allocation
-  - **Extra usage** — monthly credit spend bar (X of Y credits), shown only when Extra Usage is enabled on your account
-  - **Daily routine runs** — run budget bar for Claude Code Routines (shown when your plan includes Routines)
-- **Refresh button** (↻) — force an immediate refresh
-- **Quit button** — exit the app
-
-**Right-click** the icon for a quick context menu:
+**Click** the icon for a menu:
 
 - Current usage and reset countdown at a glance
 - **Refresh Interval** submenu — choose 30s / 1m / 2m / 5m / 10m (persisted across launches)
@@ -193,7 +178,7 @@ On first launch a browser window opens so you can log in to Claude.ai. The `sess
 | Extra usage bar not visible | Only shown when Extra Usage is enabled on your Claude account |
 | Routine runs bar not visible | Only shown when your plan includes Claude Code Routines (Pro, Max, Team, Enterprise) |
 | Claude Design bar not visible | Only shown when your plan includes a Claude Design allocation and usage is above 0% |
-| Icon missing from menu bar | Quit via the popover's Quit button and re-open the app |
+| Icon missing from menu bar | Quit via the menu and re-open the app |
 | App won't launch after macOS update | Rebuild from source with the updated SDK |
 
 ---
@@ -204,7 +189,7 @@ On first launch a browser window opens so you can log in to Claude.ai. The `sess
 ClaudeUsageMonitor/
 ├── ClaudeUsageMonitor/
 │   ├── ClaudeUsageMonitorApp.swift   # @main entry point
-│   ├── AppDelegate.swift             # Status bar, popover, refresh timer
+│   ├── AppDelegate.swift             # Status bar, menu, refresh timer
 │   ├── LoginWindowController.swift   # Full-screen login WebView
 │   ├── Models/
 │   │   └── UsageData.swift           # Data model + computed helpers
@@ -212,9 +197,6 @@ ClaudeUsageMonitor/
 │   │   ├── ClaudeAPIService.swift    # URLSession-based API client (replaces WebScrapingService)
 │   │   ├── NotificationService.swift # Usage threshold & reset notifications
 │   │   └── UpdateService.swift       # GitHub Releases update check
-│   ├── Views/
-│   │   ├── ContentView.swift         # Popover UI (two-bar dashboard)
-│   │   └── CircularProgressView.swift
 │   ├── Assets/
 │   │   └── AppIcon.icns              # All 10 icon sizes
 │   ├── Info.plist

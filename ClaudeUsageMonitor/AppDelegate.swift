@@ -1,12 +1,10 @@
 import AppKit
-import SwiftUI
 import Combine
 import UserNotifications
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
     private var loginWindowController: LoginWindowController?
     private var refreshTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -35,7 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         notifications.requestPermission()
         setupStatusItem()
-        setupPopover()
         observeService()
         startApp()
     }
@@ -45,19 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusItem.button else { return }
-        button.action = #selector(handleClick(_:))
+        button.action = #selector(showMenu)
         button.target = self
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         updateIcon(data: nil)
-    }
-
-    @objc private func handleClick(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
-            showContextMenu()
-        } else {
-            togglePopover()
-        }
     }
 
     private func updateIcon(data: UsageData?) {
@@ -85,9 +73,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Right-click context menu
+    // MARK: - Menu
 
-    private func showContextMenu() {
+    @objc private func showMenu() {
         guard let button = statusItem.button else { return }
 
         let menu = NSMenu()
@@ -172,32 +160,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func refreshNow() {
         service.refresh()
-    }
-
-    // MARK: - Popover
-
-    private func setupPopover() {
-        let rootView = ContentView()
-            .environmentObject(service)
-        let hostingController = NSHostingController(rootView: rootView)
-        hostingController.view.wantsLayer = true
-
-        popover = NSPopover()
-        popover.contentSize           = NSSize(width: 320, height: 380)
-        popover.behavior              = .transient
-        popover.animates              = true
-        popover.contentViewController = hostingController
-    }
-
-    private func togglePopover() {
-        if popover.isShown {
-            popover.performClose(nil)
-        } else if let button = statusItem.button {
-            let age = service.usageData.map { Date().timeIntervalSince($0.lastUpdated) } ?? 999
-            if age > 30 { service.refresh() }
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
-        }
     }
 
     // MARK: - Combine observers
