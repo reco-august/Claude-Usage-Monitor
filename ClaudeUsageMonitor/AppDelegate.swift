@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import UserNotifications
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var statusItem: NSStatusItem!
     private var loginWindowController: LoginWindowController?
@@ -41,10 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        guard let button = statusItem.button else { return }
-        button.action = #selector(showMenu)
-        button.target = self
-        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        let menu = NSMenu()
+        menu.delegate = self
+        statusItem.menu = menu
         updateIcon(data: nil)
     }
 
@@ -75,10 +74,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu
 
-    @objc private func showMenu() {
-        guard let button = statusItem.button else { return }
-
-        let menu = NSMenu()
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
 
         // Current usage info
         if let data = service.usageData {
@@ -147,10 +144,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         ))
-
-        // Pop up below the status bar button
-        let origin = NSPoint(x: 0, y: button.bounds.height + 4)
-        menu.popUp(positioning: nil, at: origin, in: button)
     }
 
     @objc private func setRefreshInterval(_ sender: NSMenuItem) {
