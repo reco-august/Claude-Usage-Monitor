@@ -78,6 +78,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.removeAllItems()
 
         // Current usage info
+        if let plan = service.usageData?.planType, !plan.isEmpty {
+            let planItem = NSMenuItem(title: "Plan: \(plan)", action: nil, keyEquivalent: "")
+            planItem.isEnabled = false
+            menu.addItem(planItem)
+        }
+
         if let data = service.usageData {
             let pctStr = "\(Int(data.weeklyPercentage * 100))%"
             let usageItem = NSMenuItem(

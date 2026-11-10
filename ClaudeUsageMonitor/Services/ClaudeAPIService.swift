@@ -35,6 +35,12 @@ final class ClaudeAPIService: ObservableObject {
         set { UserDefaults.standard.set(newValue, forKey: "claudeOrgId") }
     }
 
+    // Raw "tier|capabilities" from /organizations; the display name is derived on each refresh.
+    private var plan: String? {
+        get { UserDefaults.standard.string(forKey: "claudePlanRaw") }
+        set { UserDefaults.standard.set(newValue, forKey: "claudePlanRaw") }
+    }
+
     private init() {
         let config = URLSessionConfiguration.default
         config.httpCookieAcceptPolicy = .never    // we manage cookies manually via header
@@ -56,7 +62,7 @@ final class ClaudeAPIService: ObservableObject {
         }
         isLoading = true
 
-        if let existingOrgId = orgId {
+        if let existingOrgId = orgId, plan != nil {
             fetchUsage(sessionKey: key, orgId: existingOrgId)
         } else {
             fetchOrgId(sessionKey: key) { [weak self] resolvedOrgId in
@@ -114,6 +120,7 @@ final class ClaudeAPIService: ObservableObject {
                 DispatchQueue.main.async {
                     self.sessionKey = nil
                     self.orgId = nil
+                    self.plan = nil
                     self.isLoading = false
                     self.needsLogin = true
                 }
@@ -129,6 +136,8 @@ final class ClaudeAPIService: ObservableObject {
                 completion(nil)
                 return
             }
+            self.plan = (first["rate_limit_tier"] as? String ?? "") + "|"
+                + (first["capabilities"] as? [String] ?? []).joined(separator: " ")
             completion(uuid)
         }.resume()
     }
@@ -175,6 +184,7 @@ final class ClaudeAPIService: ObservableObject {
                 if http?.statusCode == 401 || http?.statusCode == 403 {
                     self.sessionKey = nil
                     self.orgId = nil
+                    self.plan = nil
                     self.needsLogin = true
                     return
                 }
@@ -186,7 +196,9 @@ final class ClaudeAPIService: ObservableObject {
                     self.errorMessage = "Invalid API response"
                     return
                 }
-                self.usageData    = APIResponseParser.parse(body)
+                var parsed = APIResponseParser.parse(body)
+                parsed.planType = APIResponseParser.planName(self.plan ?? "")
+                self.usageData    = parsed
                 self.errorMessage = nil
                 self.needsLogin   = false
                 self.fetchRoutineBudget(sessionKey: sessionKey, orgId: orgId)
@@ -243,8 +255,6 @@ private enum APIResponseParser {
         let claudeDesign: [String: Any]? = (body["seven_day_omelette"]  as? [String: Any])
                                         ?? (body["omelette_promotional"] as? [String: Any])
 
-        let tierRaw = body["rate_limit_tier"] as? String ?? ""
-
         let weeklyPct         = utilization(sevenDay)
         let sonnetPct         = utilization(sonnet)
         let claudeDesignPct   = utilization(claudeDesign)
@@ -266,7 +276,7 @@ private enum APIResponseParser {
         }
 
         var data = UsageData(
-            planType:        planType(from: tierRaw),
+            planType:        "",
             messagesUsed:    msgUsed,
             messagesLimit:   msgLimit,
             rateLimitStatus: "Normal",
@@ -313,12 +323,18 @@ private enum APIResponseParser {
         return iso.date(from: s)
     }
 
-    private static func planType(from tier: String) -> String {
-        let t = tier.lowercased()
-        if t.contains("max")  { return "Max" }
-        if t.contains("pro")  { return "Pro" }
-        if t.contains("team") { return "Team" }
-        if t.contains("free") { return "Free" }
-        return tier.isEmpty ? "Unknown" : tier
+    static func planName(_ raw: String) -> String {
+        let parts = raw.lowercased().split(separator: "|", omittingEmptySubsequences: false)
+        let tier  = parts.first.map(String.init) ?? ""
+        let all   = parts.joined(separator: " ")
+        if all.contains("max") {
+            let name = tier.contains("20x") ? "Ultra" : "Max"
+            guard let r = tier.range(of: #"\d+x"#, options: .regularExpression) else { return name }
+            return "\(name) (\(tier[r]))"
+        }
+        if all.contains("enterprise") { return "Enterprise" }
+        if all.contains("team")       { return "Team" }
+        if all.contains("pro")        { return "Pro" }
+        return tier
     }
 }
